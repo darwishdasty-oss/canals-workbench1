@@ -1,0 +1,76 @@
+name: Build Windows .exe
+
+# Simpler workflow — just builds the Windows executable on every push.
+# Useful when you only need the .exe and don't want to wait for Linux/macOS builds.
+
+on:
+  push:
+    branches: [main, master, develop]
+    tags: ['v*']
+  pull_request:
+    branches: [main, master, develop]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    name: Build Canals.exe
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller PySide6 numpy scipy matplotlib
+
+      - name: Run unit tests
+        shell: pwsh
+        run: python -m unittest discover tests -v
+
+      - name: Build with PyInstaller
+        shell: pwsh
+        run: pyinstaller --clean --noconfirm canals.spec
+
+      - name: Verify Canals.exe
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "dist\Canals.exe")) {
+            Write-Error "Canals.exe not produced!"
+            exit 1
+          }
+          $size = (Get-Item "dist\Canals.exe").Length
+          $sizeMB = [math]::Round($size/1MB, 1)
+          Write-Host "::notice::Canals.exe produced, $sizeMB MB"
+
+      - name: Zip binary
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "dist\Canals.exe" -DestinationPath "Canals-windows-x64.zip"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Canals-windows-x64
+          path: Canals-windows-x64.zip
+          retention-days: 30
+
+      - name: Attach to release (on tag)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Canals-windows-x64.zip
+          generate_release_notes: true
