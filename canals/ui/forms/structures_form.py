@@ -19,6 +19,7 @@ from canals.structures import (
 from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QPushButton, QTabWidget,
                                 QWidget, QLabel, QScrollArea)
 from PySide6.QtCore import Qt
+from ._report_helper import ReportButton
 from ._widgets import LabeledInput, SectionFrame, ResultTable
 
 
@@ -103,6 +104,9 @@ class StructuresForm(QtWidgets.QMdiSubWindow):
         self.btn_gate.setStyleSheet("QPushButton { background: #1A3A6C; color: white; padding: 8px; font-weight: bold; } QPushButton:hover { background: #2A5A8C; }")
         self.btn_gate.clicked.connect(self._on_gate)
         gates_section.addWidget(self.btn_gate)
+
+        self.btn_report = ReportButton(form_name='sluice_gate')
+        gates_section.addWidget(self.btn_report)
 
         gates_left_layout.addWidget(gates_section)
         gates_left_layout.addStretch(1)
@@ -224,10 +228,19 @@ class StructuresForm(QtWidgets.QMdiSubWindow):
             b = self.gate_b.value()
             if self.gate_type.currentIndex() == 0:  # sluice
                 a = self.gate_a.value()
-                res = self.gate_designer.design_sluice_gate(Q, H_up, H_down, b, opening=a)
+                res = self.gate_designer.design_sluice_gate(Q, H_up, H_down, b, max_opening=a)
+                self.btn_report.set_result(
+                    inputs={'Q': Q, 'H_up': H_up, 'H_down': H_down,
+                            'gate_width': b, 'opening': a},
+                    result=dict(res)
+                )
             else:  # radial
                 radius = self.gate_radius.value()
                 res = self.gate_designer.design_radial_gate(Q, H_up, b, radius=radius)
+                self.btn_report.set_result(
+                    inputs={'Q': Q, 'H_up': H_up, 'gate_width': b, 'radius': radius},
+                    result=dict(res)
+                )
             self.gate_results.populate(res)
         except Exception as e:
             import traceback

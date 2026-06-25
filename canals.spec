@@ -2,14 +2,8 @@
 """
 canals.spec - PyInstaller spec for Canals Workbench.
 
-Builds a standalone Windows .exe (when run on Windows) or Linux ELF (when run on Linux).
-
-Build commands:
-    pyinstaller --clean canals.spec
-
-Produces:
-    dist/Canals                (Linux, ~50 MB)
-    dist/Canals.exe            (Windows, ~50 MB)
+Run via build_windows.bat / build_linux.sh / build_macos.sh which
+call PyInstaller with --collect-all for PySide6 and matplotlib.
 """
 import sys
 import os
@@ -22,16 +16,7 @@ EXE_NAME = 'Canals.exe' if IS_WINDOWS else 'Canals'
 SPECPATH = os.path.abspath(SPECPATH)
 PROJECT_ROOT = os.path.dirname(SPECPATH)
 
-# Explicit list of hidden imports
 hiddenimports = [
-    # PySide6
-    'PySide6.QtCore', 'PySide6.QtWidgets', 'PySide6.QtGui',
-    'PySide6.QtPrintSupport', 'PySide6.QtNetwork',
-    # numpy / scipy / matplotlib
-    'numpy', 'scipy', 'matplotlib',
-    'matplotlib.backends.backend_qtagg',
-    'matplotlib.backends.backend_agg',
-    # Canals
     'canals', 'canals.cli',
     'canals.ui', 'canals.ui.forms',
     'canals.ui.forms.open_channel_form',
@@ -40,14 +25,13 @@ hiddenimports = [
     'canals.ui.forms.flow_profile_form',
     'canals.ui.forms.hydraulic_jump_form',
     'canals.ui.forms.water_hammer_form',
-    'canals.ui.forms._widgets',
+    'canals.ui.forms._widgets', 'canals.ui.forms._report_helper',
+    'canals.reports',
     'canals.open_channel', 'canals.structures', 'canals.earth_canal',
     'canals.flow_profile', 'canals.hydraulic_jump', 'canals.water_hammer',
 ]
 
-datas = [
-    ('canals', 'canals'),
-]
+datas = [('canals', 'canals')]
 
 icon_path = os.path.join(PROJECT_ROOT, 'figures', 'icon.ico' if IS_WINDOWS else 'icon.png')
 icon = icon_path if os.path.exists(icon_path) else None
@@ -59,44 +43,10 @@ a = Analysis(
     datas=datas,
     hiddenimports=hiddenimports,
     hookspath=[],
-    hooksconfig={},
     runtime_hooks=[],
-    excludes=[
-        'tkinter',
-        'matplotlib.tests',
-        'numpy.tests',
-        'scipy.tests',
-        'pytest',
-        'IPython',
-        'jupyter',
-        'notebook',
-    ],
-    win_no_prefer_redirects=False,
-    win_private_assemblies=False,
-    cipher=block_cipher,
+    excludes=['tkinter', 'matplotlib.tests', 'numpy.tests', 'scipy.tests', 'pytest', 'IPython', 'jupyter', 'pandas'],
     noarchive=False,
 )
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
-
-exe = EXE(
-    pyz,
-    a.scripts,
-    a.binaries,
-    a.zipfiles,
-    a.datas,
-    [],
-    name=EXE_NAME,
-    debug=False,
-    bootloader_ignore_signals=False,
-    strip=False,
-    upx=True,
-    upx_exclude=[],
-    runtime_tmpdir=None,
-    console=False,
-    disable_windowed_traceback=False,
-    argv_emulation=False,
-    target_arch=None,
-    codesign_identity=None,
-    entitlements_file=None,
-    icon=icon,
-)
+exe = EXE(pyz, a.scripts, a.binaries, a.zipfiles, a.datas, [], name=EXE_NAME,
+    debug=False, strip=False, upx=True, console=False, icon=icon)

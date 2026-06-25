@@ -27,6 +27,7 @@ matplotlib.use('Agg')
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
+from ._report_helper import ReportButton
 from ._widgets import LabeledInput, SectionFrame, ResultTable
 
 
@@ -170,6 +171,9 @@ class WaterHammerForm(QtWidgets.QMdiSubWindow):
         self.btn_clear.clicked.connect(self._on_clear)
         btn_section.addWidget(self.btn_clear)
 
+        self.btn_report = ReportButton(form_name='water_hammer')
+        btn_section.addWidget(self.btn_report)
+
         left_layout.addWidget(btn_section)
         left_layout.addStretch(1)
         left.setLayout(left_layout)
@@ -263,6 +267,26 @@ class WaterHammerForm(QtWidgets.QMdiSubWindow):
             }
             self.result_table.populate(total)
             self._plot_results(pipe, fluid, results, op_pressure)
+            self.btn_report.set_result(
+                inputs={'L': pipe.length,
+                        'D': pipe.diameter,
+                        'e': pipe.wall_thickness,
+                        'E': pipe.elastic_modulus,
+                        'nu': pipe.poisson_ratio,
+                        'sigma_y': pipe.yield_strength,
+                        'rho': fluid.density,
+                        'K': fluid.bulk_modulus,
+                        'V': flow_velocity,
+                        't_c': closure_time},
+                result={'wave_speed': results["wave_speed"],
+                        'critical_time': results["critical_time"],
+                        'pressure_rise_time': results["pressure_rise_time"],
+                        'closure_type': results["closure_type"],
+                        'delta_pressure_bar': results["delta_pressure_bar"],
+                        'delta_pressure_psi': results["delta_pressure_psi"],
+                        'hoop_stress': results["hoop_stress"],
+                        'safety_factor': results["safety_factor"]}
+            )
         except Exception as e:
             import traceback
             QtWidgets.QMessageBox.critical(self, "Error in Water Hammer", f"{e}\n\n{traceback.format_exc()}")

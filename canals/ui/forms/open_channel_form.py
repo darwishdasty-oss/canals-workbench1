@@ -33,6 +33,7 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
 from ._widgets import LabeledInput, ChannelTypeSelector, ResultTable, SectionFrame
+from ._report_helper import ReportButton
 
 
 class OpenChannelForm(QtWidgets.QMdiSubWindow):
@@ -144,6 +145,9 @@ class OpenChannelForm(QtWidgets.QMdiSubWindow):
         self.btn_clear.clicked.connect(self._on_clear)
         btn_section.addWidget(self.btn_clear)
 
+        self.btn_report = ReportButton(form_name='open_channel')
+        btn_section.addWidget(self.btn_report)
+
         left_layout.addWidget(btn_section)
         left_layout.addStretch(1)
         left.setLayout(left_layout)
@@ -197,6 +201,11 @@ class OpenChannelForm(QtWidgets.QMdiSubWindow):
             res = self.designer.design_optimal_section(Q, n, S, channel_type=ctype_enum)
             self.result_table.populate(res)
             self._plot_section(res)
+            self.btn_report.set_result(
+                inputs={'Q': Q, 'n': n, 'S': S, 'z': self.inp_z.value(),
+                        'channel_type': ctype},
+                result=dict(res)
+            )
         except Exception as e:
             import traceback
             self._show_error("Optimal Section Design", e, traceback.format_exc())

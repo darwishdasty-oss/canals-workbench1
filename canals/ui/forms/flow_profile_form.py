@@ -32,6 +32,7 @@ matplotlib.use('Agg')
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
+from ._report_helper import ReportButton
 from ._widgets import LabeledInput, ChannelTypeSelector, SectionFrame, ResultTable
 
 
@@ -150,6 +151,9 @@ class FlowProfileForm(QtWidgets.QMdiSubWindow):
         self.btn_clear.clicked.connect(self._on_clear)
         btn_section.addWidget(self.btn_clear)
 
+        self.btn_report = ReportButton(form_name='flow_profile')
+        btn_section.addWidget(self.btn_report)
+
         left_layout.addWidget(btn_section)
         left_layout.addStretch(1)
         left.setLayout(left_layout)
@@ -261,6 +265,17 @@ class FlowProfileForm(QtWidgets.QMdiSubWindow):
             }
             self.result_table.populate(results)
             self._plot_profile(x, y, yc, yn)
+            self.btn_report.set_result(
+                inputs={'Q': self.channel.flow_params["Q"],
+                        'b': self.channel.channel_params.get('b', 0),
+                        'S': self.channel.flow_params.get('S0', 0),
+                        'n': self.channel.flow_params['n'],
+                        'L': self.channel.flow_params["L"],
+                        'y_upstream': self.channel.flow_params["y_initial"]},
+                result={'critical_depth': yc,
+                        'normal_depth': yn if yn and yn != float('inf') else 0,
+                        'profile_type': results["curve_at_start"]}
+            )
         except Exception as e:
             import traceback
             QtWidgets.QMessageBox.critical(self, "Error in Flow Profile", f"{e}\n\n{traceback.format_exc()}")

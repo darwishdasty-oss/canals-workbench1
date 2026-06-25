@@ -21,6 +21,7 @@ import matplotlib
 matplotlib.use('Agg')
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
+from ._report_helper import ReportButton
 from ._widgets import LabeledInput, SectionFrame, ResultTable
 
 
@@ -126,6 +127,9 @@ class EarthCanalForm(QtWidgets.QMdiSubWindow):
         self.btn_clear.clicked.connect(self._on_clear)
         btn_section.addWidget(self.btn_clear)
 
+        self.btn_report = ReportButton(form_name='earth_canal_manning')
+        btn_section.addWidget(self.btn_report)
+
         left_layout.addWidget(btn_section)
         left_layout.addStretch(1)
         left.setLayout(left_layout)
@@ -155,6 +159,11 @@ class EarthCanalForm(QtWidgets.QMdiSubWindow):
             self.result_table.populate(res)
             self._plot_section(z, res.get('depth', 2.0), res.get('bottom_width', 1.5),
                                f"Lacey: Q={Q} m³/s, f={f}")
+            self.btn_report.form_name = 'earth_canal_lacey'
+            self.btn_report.set_result(
+                inputs={'Q': Q, 'f': f, 'side_slope': z},
+                result=dict(res)
+            )
         except Exception as e:
             import traceback
             QtWidgets.QMessageBox.critical(self, "Error in Lacey Theory", f"{e}\n\n{traceback.format_exc()}")
@@ -183,6 +192,11 @@ class EarthCanalForm(QtWidgets.QMdiSubWindow):
             self.result_table.populate(res)
             self._plot_section(z, res.get('depth', 2.0), res.get('bottom_width', 1.5),
                                f"Manning: Q={Q} m³/s, n={n}, S={S}")
+            self.btn_report.form_name = 'earth_canal_manning'
+            self.btn_report.set_result(
+                inputs={'Q': Q, 'n': n, 'S': S, 'side_slope': z},
+                result=dict(res)
+            )
         except Exception as e:
             import traceback
             QtWidgets.QMessageBox.critical(self, "Error in Manning Theory", f"{e}\n\n{traceback.format_exc()}")

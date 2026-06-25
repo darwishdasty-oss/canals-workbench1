@@ -1,165 +1,158 @@
 # Building Canals Workbench for Windows
 
-## What's in this kit
+## What you need
 
-This directory contains everything needed to build `Canals.exe` (the Windows
-executable) on a Windows machine:
+1. **Windows 10 or 11** (64-bit)
+2. **Python 3.10 or newer** from https://www.python.org/downloads/windows/
+   - ⚠️ **CRITICAL**: Tick **"Add Python to PATH"** during installation
+3. **~ 1 GB free disk space** for the build
+4. **Internet connection** (to download PySide6, numpy, scipy, matplotlib)
 
-```
-canals_workbench/
-├── canals_mdi.py            ← Python entry point
-├── canals/                  ← The package (algorithm + forms)
-├── canals.spec              ← PyInstaller spec (verified working)
-├── pyproject.toml           ← pip metadata
-├── README.md
-├── LICENSE
-├── tests/                   ← 17 unit tests
-├── docs/USER_GUIDE.md
-├── bin/
-│   ├── build_windows.bat    ← Double-click this on Windows
-│   ├── build_linux.sh
-│   └── build_macos.sh
-└── WINDOWS_BUILD.md         ← This file
-```
+## Build in 3 minutes
 
-## Quickest way to build (3 minutes)
+### Step 1 — install Python
 
-### Step 1 — install prerequisites on your Windows machine
+1. Download Python 3.11 from https://www.python.org/downloads/
+2. Run the installer
+3. **⚠️ Tick "Add Python to PATH"** on the first screen — this is the most common cause of "Python is not recognized" errors
+4. Click "Install Now"
 
-1. **Python 3.10 or newer** — https://www.python.org/downloads/windows/
-   - Tick **"Add Python to PATH"** during installation
-2. **Git for Windows** (optional, for cloning) — https://git-scm.com/
-
-### Step 2 — get the source
+### Step 2 — get the code
 
 Either:
-
-- **Option A (zip):** transfer the `canals_workbench/` directory to your Windows
-  machine via USB, OneDrive, email attachment, etc.
-- **Option B (git):** open PowerShell and run:
-  ```cmd
-  git clone https://github.com/abbas-hebah/canals-workbench.git
-  cd canals-workbench
-  ```
+- **From zip**: extract `canals_workbench.zip` anywhere (Desktop, Documents, etc.)
+- **From git**: open PowerShell and run `git clone <repo-url> canals_workbench`
 
 ### Step 3 — double-click `bin\build_windows.bat`
 
-This script will:
-1. Install `pyinstaller`, `PySide6`, `numpy`, `scipy`, `matplotlib`
-2. Run PyInstaller using `canals.spec`
-3. Produce `dist\Canals.exe` (~ 130 MB)
+That's it. The script will:
+1. Verify Python is installed (and exit with clear error if not)
+2. Install PySide6 + numpy + scipy + matplotlib + pyinstaller
+3. Run PyInstaller using the verified `canals.spec`
+4. Show a green "BUILD SUCCEEDED" message
+5. Copy `Canals.exe` to your Desktop
 
-It typically takes 2-3 minutes. When it finishes, you'll see
-"Build complete! Output: dist\Canals.exe".
+**Expected timeline:**
+- 1-3 min: pip install dependencies (depends on internet speed)
+- 2-5 min: PyInstaller builds the binary
+- ~ 5 min total
 
-### Step 4 — test it
+### Step 4 — verify the build
 
-Double-click `dist\Canals.exe`. The Canals Workbench MDI shell should open
-with all 6 forms available from the menus.
+Run `bin\verify_windows_build.bat`. It runs 6 checks:
+- File exists
+- File size > 100 MB (typical: 130 MB)
+- Valid Windows PE header
+- PyInstaller marker present
+- All 5 required modules bundled (canals, PySide6, numpy, scipy, matplotlib)
+- Binary launches without immediate crash
 
-### Step 5 — distribute
-
-The single `Canals.exe` file is fully self-contained — no Python installation
-required on the target machine. Compress it (right-click → Send to →
-Compressed (zipped) folder) and email / upload / copy as needed.
-
-## Manual build (if the .bat fails)
-
-Open `cmd.exe` (or PowerShell) in the `canals_workbench` directory and run:
-
-```cmd
-pip install pyinstaller PySide6 numpy scipy matplotlib
-pyinstaller --clean --noconfirm canals.spec
-dir dist
+Output:
+```
+===========================================================
+   Verification summary:  6 passed,  0 failed
+===========================================================
+   BUILD IS GOOD.
 ```
 
-Expected output:
+### Step 5 — run Canals Workbench
 
-```
-   ...
-   Build complete! The results are available in: ...\dist
-```
+`Canals.exe` has been copied to your Desktop. Double-click it. The Canals Workbench MDI shell opens with all 6 forms available from the menus.
 
-Then check `dist\Canals.exe` exists and is roughly 130 MB.
+### Step 6 — distribute
+
+Right-click `dist\Canals.exe` → "Send to" → "Compressed (zipped) folder" → email / upload the resulting `.zip`. No Python installation required on the target machine.
+
+---
+
+## How to read the output
+
+The build script's terminal output can look alarming if you've never used a Windows batch file before. Here's what the messages mean:
+
+| Message | Meaning |
+|---|---|
+| `Press any key to continue . . .` | ✅ **SUCCESS** — the script finished. Press any key to close the window. |
+| `[1/4] Checking Python installation... OK - found Python 3.11.9!` | ✅ Python is correctly installed. |
+| `[2/4] Installing build dependencies... OK - all dependencies installed.` | ✅ Pip install worked. |
+| `[3/4] Cleaning any previous build artifacts... OK - clean workspace ready.` | ✅ Old build/ and dist/ deleted. |
+| `[4/4] Running PyInstaller...` | ⏳ Build is running. Wait 2-5 minutes. |
+| `BUILD SUCCEEDED` | ✅ The .exe was created. |
+| `BUILD FAILED - PyInstaller exited with error code N` | ❌ Scroll UP and look at the actual PyInstaller error. |
+
+---
 
 ## Troubleshooting
 
-### "Python is not recognized"
+### "Python is not recognized as an internal or external command"
 
-Python is not in your PATH. Reinstall Python and tick "Add Python to PATH",
-or run the .bat from the directory containing `python.exe`:
+Python is not on your PATH. Two options:
 
+**Option A** — reinstall Python and tick "Add Python to PATH":
+1. https://www.python.org/downloads/
+2. Run installer
+3. Tick "Add Python to PATH" on the first screen
+4. Install
+5. Re-run `build_windows.bat`
+
+**Option B** — call Python with full path:
 ```cmd
-cd C:\path\to\canals_workbench
-C:\Python311\python.exe bin\build_windows.bat
+C:\Users\YourName\AppData\Local\Programs\Python\Python311\python.exe bin\build_windows.bat
 ```
 
-### "PyInstaller not found"
+### "pip install fails" or "Could not fetch URL"
 
-The .bat installs it, but if that step failed (e.g. no internet), install
-manually:
+- Check your internet connection
+- If behind a corporate proxy: set `HTTP_PROXY` and `HTTPS_PROXY` environment variables
+- Try: `python -m pip install --upgrade pip` first, then re-run
 
-```cmd
-pip install pyinstaller
-```
+### "Antivirus blocked PyInstaller" or "Windows Defender removed Canals.exe"
+
+Some antivirus products (especially Windows Defender) flag PyInstaller executables as suspicious. This is a **false positive**.
+
+Solutions:
+1. Add an exception in Windows Defender for the `dist/` folder
+2. Run `verify_windows_build.bat` which has a brief launch test
+3. For real distribution: code-sign the .exe (requires a $200-400/year code-signing certificate from Sectigo or DigiCert)
+
+### "Build failed" — but no clear error
+
+Scroll UP from the "BUILD FAILED" message. The PyInstaller output above will contain the actual error. Common causes:
+- Missing `PySide6` → run `pip install PySide6` manually
+- Missing `numpy` / `scipy` / `matplotlib` → run `pip install numpy scipy matplotlib`
+- Antivirus deleted `Canals.exe` mid-build → disable real-time scanning for the build folder
+
+### "Canals.exe is only 5 MB" — way too small
+
+A correctly-built Canals.exe should be **120-140 MB**. If you see < 50 MB, PyInstaller didn't bundle all dependencies. Check:
+- `pip list` shows PySide6, numpy, scipy, matplotlib all installed
+- No errors during the `pip install` step
+- `canals.spec` is the correct spec file (don't replace it with a minimal one)
 
 ### "Canals.exe crashes on launch"
 
-Most likely a missing hidden import. Edit `canals.spec` and add the missing
-module to `hiddenimports`. The full list of currently-imported modules is:
+1. Run `bin\verify_windows_build.bat` — it'll launch Canals.exe for 5 seconds
+2. If a window briefly appears, the build is good
+3. If a console window appears with an error, capture the error message
+4. Run from a terminal: `dist\Canals.exe` — errors will be visible in the terminal
 
-```
-PySide6.QtCore, PySide6.QtWidgets, PySide6.QtGui, PySide6.QtPrintSupport,
-PySide6.QtNetwork, numpy, scipy, matplotlib, matplotlib.backends.backend_qtagg,
-matplotlib.backends.backend_agg,
-canals, canals.cli, canals.ui, canals.ui.forms,
-canals.ui.forms.open_channel_form,
-canals.ui.forms.structures_form,
-canals.ui.forms.earth_canal_form,
-canals.ui.forms.flow_profile_form,
-canals.ui.forms.hydraulic_jump_form,
-canals.ui.forms.water_hammer_form,
-canals.ui.forms._widgets,
-canals.open_channel, canals.structures, canals.earth_canal,
-canals.flow_profile, canals.hydraulic_jump, canals.water_hammer
-```
+### "Windows Defender flagged Canals.exe as Trojan"
 
-### "Windows Defender flags the .exe as suspicious"
+This is a false positive. PyInstaller executables are notoriously flagged. Options:
+1. **Submit to Microsoft** at https://www.microsoft.com/en-us/wdsi/filesubmission — they review and whitelist
+2. **Code-sign** the .exe — signed binaries are flagged much less often
+3. **Use `--onedir`** mode — produces a folder of files instead of one .exe; less likely to be flagged
 
-This is a common false-positive with PyInstaller binaries. Solutions:
-
-1. **Code-sign the .exe** (requires a code-signing certificate, $200-400/year)
-2. **Submit to Microsoft** for analysis: https://www.microsoft.com/en-us/wdsi/filesubmission
-3. **Distribute as a zip** — Defender is less aggressive with zip files
-4. **Use `--onedir` mode** instead of `--onefile` — produces a directory of
-   files instead of a single exe. The directory is less likely to trigger
-   heuristics. Edit `canals.spec` and change `EXE(...)` to use `COLLECT(...)`.
+---
 
 ## Building from CI / GitHub Actions
 
-For automated builds, see `.github/workflows/build.yml` (to be created) or
-use this minimal workflow:
+Instead of building on your local Windows machine, use the GitHub Actions workflow included in `.github/workflows/build.yml`. Push to GitHub and the pipeline builds `Canals.exe` on a real Microsoft-hosted Windows runner in ~ 5 minutes. See `.github/README.md` for details.
 
-```yaml
-name: Build Windows exe
-on: [push]
-jobs:
-  build:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-      - run: pip install pyinstaller PySide6 numpy scipy matplotlib
-      - run: pyinstaller --clean --noconfirm canals.spec
-      - uses: actions/upload-artifact@v3
-        with:
-          name: Canals-Windows-x64
-          path: dist/Canals.exe
-```
+## Building on macOS or Linux
 
-This produces a downloadable `Canals-Windows-x64.zip` artifact on every push.
+See `bin/build_linux.sh` and `bin/build_macos.sh`. Or use the GitHub Actions workflow which builds all 3 platforms in parallel.
+
+---
 
 ## License
 
